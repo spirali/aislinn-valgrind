@@ -94,6 +94,7 @@ typedef
       Bool malloc_replacement;
       Bool xml_output;
       Bool final_IR_tidy_pass;
+      Bool restore_thread;
    } 
    VgNeeds;
 
@@ -243,6 +244,7 @@ typedef struct {
    void (*track_pre_deliver_signal) (ThreadId, Int sigNo, Bool);
    void (*track_post_deliver_signal)(ThreadId, Int sigNo);
 
+   Bool (*tool_restore_thread)(ThreadId);
 } VgToolInterface;
 
 extern VgToolInterface VG_(tdict);

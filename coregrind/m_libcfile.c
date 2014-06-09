@@ -912,6 +912,41 @@ Int VG_(connect_via_socket)( const HChar* str )
 #  endif
 }
 
+Int VG_(read_socket)( Int sd, void *msg, Int count )
+{
+   /* This is actually send(). */
+
+   /* For Linux, VKI_MSG_NOSIGNAL is a request not to send SIGPIPE on
+      errors on stream oriented sockets when the other end breaks the
+      connection. The EPIPE error is still returned.
+
+      For Darwin, VG_(socket)() sets SO_NOSIGPIPE to get EPIPE instead of
+      SIGPIPE */
+
+#  if defined(VGP_x86_linux) || defined(VGP_ppc32_linux) \
+      || defined(VGP_ppc64_linux) || defined(VGP_s390x_linux)
+   SysRes res;
+   UWord  args[4];
+   args[0] = sd;
+   args[1] = (UWord)msg;
+   args[2] = count;
+   args[3] = VKI_MSG_NOSIGNAL;
+   res = VG_(do_syscall2)(__NR_socketcall, VKI_SYS_RECV, (UWord)&args);
+   return sr_isError(res) ? -1 : sr_Res(res);
+
+#  elif defined(VGP_amd64_linux) || defined(VGP_arm_linux) \
+        || defined(VGP_mips32_linux) || defined(VGP_mips64_linux) \
+        || defined(VGP_arm64_linux)
+   SysRes res;
+   res = VG_(do_syscall6)(__NR_recvfrom, sd, (UWord)msg,
+                                       count, VKI_MSG_NOSIGNAL, 0,0);
+   return sr_isError(res) ? -1 : sr_Res(res);
+#  else
+#    error "Unknown platform"
+#  endif
+}
+
+
 
 /* Let d = one or more digits.  Accept either:
    d.d.d.d  or  d.d.d.d:d

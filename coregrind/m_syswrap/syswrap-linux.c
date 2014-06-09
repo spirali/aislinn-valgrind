@@ -152,17 +152,29 @@ static void run_a_thread_NORETURN ( Word tidW )
                                   tst->os_state.valgrind_stack_init_SP));
    
    /* Run the thread all the way through. */
-   src = thread_wrapper(tid);  
+   for (;;) {
+      src = thread_wrapper(tid);
 
-   VG_(debugLog)(1, "syswrap-linux", 
-                    "run_a_thread_NORETURN(tid=%lld): post-thread_wrapper\n",
-                    (ULong)tidW);
+      VG_(debugLog)(1, "syswrap-linux",
+                       "run_a_thread_NORETURN(tid=%lld): post-thread_wrapper\n",
+                       (ULong)tidW);
 
-   c = VG_(count_living_threads)();
-   vg_assert(c >= 1); /* stay sane */
+      c = VG_(count_living_threads)();
+      vg_assert(c >= 1); /* stay sane */
 
-   // Tell the tool this thread is exiting
-   VG_TRACK( pre_thread_ll_exit, tid );
+      // Tell the tool this thread is exiting
+      VG_TRACK( pre_thread_ll_exit, tid );
+
+      if (VG_(needs).restore_thread) {
+         if (VG_TDICT_CALL(tool_restore_thread, tid)) {
+            VG_(release_BigLock_LL)(NULL);
+            VG_(running_tid) = VG_INVALID_THREADID;
+            continue;
+         }
+      }
+      break;
+   }
+
 
    /* If the thread is exiting with errors disabled, complain loudly;
       doing so is bad (does the user know this has happened?)  Also,
