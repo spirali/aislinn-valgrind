@@ -369,6 +369,14 @@ void VG_(needs_final_IR_tidy_pass)(
    VG_(tdict).tool_final_IR_tidy_pass = final_tidy;
 }
 
+void VG_(needs_restore_thread)(
+   Bool (restore_thread)(ThreadId tid)
+)
+{
+   VG_(needs).restore_thread = True;
+   VG_(tdict).tool_restore_thread = restore_thread;
+}
+
 /*--------------------------------------------------------------------*/
 /* Tracked events.  Digit 'n' on DEFn is the REGPARMness. */
 
