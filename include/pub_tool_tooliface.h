@@ -705,6 +705,14 @@ void VG_(track_pre_thread_ll_create) (void(*f)(ThreadId tid, ThreadId child));
 void VG_(track_pre_thread_first_insn)(void(*f)(ThreadId tid));
 void VG_(track_pre_thread_ll_exit)   (void(*f)(ThreadId tid));
 
+void VG_(needs_restore_thread)(
+      Bool (restore_thread)(ThreadId tid)
+);
+
+void VG_(needs_syscall_control)(
+    Bool (*syscall_control)(ThreadId, UInt, UWord*, UInt, SysRes*)
+);
+
 
 /* Signal events (not exhaustive)
 

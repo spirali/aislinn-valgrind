@@ -1065,6 +1065,72 @@ Int VG_(connect_via_socket)( const HChar* str )
 #  endif
 }
 
+Int VG_(make_listen_socket)(Int port, Int queue_size)
+{
+#  if defined(VGO_linux) || defined(VGO_darwin)
+   Int sd;
+   SysRes res;
+   struct vki_sockaddr_in addr;
+
+   /* create socket */
+   sd = VG_(socket)(VKI_AF_INET, VKI_SOCK_STREAM, 0 /* IPPROTO_IP ? */);
+   if (sd < 0) {
+      /* this shouldn't happen ... nevertheless */
+      return -2;
+   }
+
+   addr.sin_family = VKI_AF_INET;
+   addr.sin_addr.s_addr = 0; // INADDR_ANY
+   addr.sin_port = VG_(htons)(port);
+
+   res = VG_(do_syscall3)(__NR_bind, sd, (UWord) &addr, sizeof(addr));
+   vg_assert(!sr_isError(res));
+
+   res = VG_(do_syscall2)(__NR_listen, sd, queue_size);
+   vg_assert(!sr_isError(res));
+
+   return sd;
+
+#  else
+#    error "Unknown OS"
+#  endif
+}
+
+Int VG_(read_socket)( Int sd, void *msg, Int count )
+{
+   /* This is actually send(). */
+
+   /* For Linux, VKI_MSG_NOSIGNAL is a request not to send SIGPIPE on
+      errors on stream oriented sockets when the other end breaks the
+      connection. The EPIPE error is still returned.
+
+      For Darwin, VG_(socket)() sets SO_NOSIGPIPE to get EPIPE instead of
+      SIGPIPE */
+
+#  if defined(VGP_x86_linux) || defined(VGP_ppc32_linux) \
+      || defined(VGP_ppc64_linux) || defined(VGP_s390x_linux)
+   SysRes res;
+   UWord  args[4];
+   args[0] = sd;
+   args[1] = (UWord)msg;
+   args[2] = count;
+   args[3] = VKI_MSG_NOSIGNAL;
+   res = VG_(do_syscall2)(__NR_socketcall, VKI_SYS_RECV, (UWord)&args);
+   return sr_isError(res) ? -1 : sr_Res(res);
+
+#  elif defined(VGP_amd64_linux) || defined(VGP_arm_linux) \
+        || defined(VGP_mips32_linux) || defined(VGP_mips64_linux) \
+        || defined(VGP_arm64_linux)
+   SysRes res;
+   res = VG_(do_syscall6)(__NR_recvfrom, sd, (UWord)msg,
+                                       count, VKI_MSG_NOSIGNAL, 0,0);
+   return sr_isError(res) ? -1 : sr_Res(res);
+#  else
+#    error "Unknown platform"
+#  endif
+}
+
+
 
 /* Let d = one or more digits.  Accept either:
    d.d.d.d  or  d.d.d.d:d
@@ -1283,6 +1349,20 @@ Int VG_(getsockname) ( Int sd, struct vki_sockaddr *name, Int *namelen)
                           VKI_SOV_DEFAULT /*version*/);
    return sr_isError(res) ? -1 : sr_Res(res);
 
+#  else
+#    error "Unknown platform"
+#  endif
+}
+
+Int VG_(accept)  (Int sd, struct vki_sockaddr *name, Int *namelen)
+{
+#  if defined(VGP_amd64_linux) || defined(VGP_arm_linux) \
+        || defined(VGP_mips64_linux) || defined(VGP_arm64_linux) \
+        || defined(VGP_tilegx_linux)
+   SysRes res;
+   res = VG_(do_syscall3)( __NR_accept,
+                           (UWord)sd, (UWord)name, (UWord)namelen );
+   return sr_isError(res) ? -1 : sr_Res(res);
 #  else
 #    error "Unknown platform"
 #  endif

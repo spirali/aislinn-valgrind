@@ -1901,11 +1901,32 @@ void VG_(client_syscall) ( ThreadId tid, UInt trc )
                     &tmpv[0], sizeof(tmpv)/sizeof(tmpv[0]));
    }
 
-   vg_assert(ent);
-   vg_assert(ent->before);
-   (ent->before)( tid,
-                  &layout, 
-                  &sci->args, &sci->status, &sci->flags );
+   Bool do_syscall = True;
+   if (VG_(needs).syscall_control) {
+      UWord tmpv[8];
+      tmpv[0] = sci->orig_args.arg1;
+      tmpv[1] = sci->orig_args.arg2;
+      tmpv[2] = sci->orig_args.arg3;
+      tmpv[3] = sci->orig_args.arg4;
+      tmpv[4] = sci->orig_args.arg5;
+      tmpv[5] = sci->orig_args.arg6;
+      tmpv[6] = sci->orig_args.arg7;
+      tmpv[7] = sci->orig_args.arg8;
+      if (!VG_(tdict).tool_syscall_control(tid, sysno, &tmpv[0],
+			      sizeof(tmpv)/sizeof(tmpv[0]), &sci->status.sres)) {
+        do_syscall = False;
+        sci->status.what = SsComplete;
+        //sci->flags |= SfNoWriteResult;
+      }
+   }
+
+   if (do_syscall) {
+        vg_assert(ent);
+        vg_assert(ent->before);
+        (ent->before)( tid,
+                       &layout,
+                       &sci->args, &sci->status, &sci->flags );
+   }
    
    /* If needed, gdbserver will report syscall entry to GDB */
    VG_(gdbserver_report_syscall)(True, sysno, tid);
@@ -1934,8 +1955,8 @@ void VG_(client_syscall) ( ThreadId tid, UInt trc )
       /* In this case the allowable flags are to ask for a signal-poll
          and/or a yield after the call.  Changing the args isn't
          allowed. */
-      vg_assert(0 == (sci->flags 
-                      & ~(SfPollAfter | SfYieldAfter | SfNoWriteResult)));
+      /*vg_assert(0 == (sci->flags
+                      & ~(SfPollAfter | SfYieldAfter | SfNoWriteResult)));*/
       vg_assert(eq_SyscallArgs(&sci->args, &sci->orig_args));
    }
 

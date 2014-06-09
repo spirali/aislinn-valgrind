@@ -99,7 +99,8 @@ VgNeeds VG_(needs) = {
    .var_info	         = False,
    .malloc_replacement   = False,
    .xml_output           = False,
-   .final_IR_tidy_pass   = False
+   .final_IR_tidy_pass   = False,
+   .syscall_control      = False,
 };
 
 /* static */
@@ -370,6 +371,23 @@ void VG_(needs_final_IR_tidy_pass)(
    VG_(needs).final_IR_tidy_pass = True;
    VG_(tdict).tool_final_IR_tidy_pass = final_tidy;
 }
+
+void VG_(needs_restore_thread)(
+   Bool (restore_thread)(ThreadId tid)
+)
+{
+   VG_(needs).restore_thread = True;
+   VG_(tdict).tool_restore_thread = restore_thread;
+}
+
+void VG_(needs_syscall_control)(
+   Bool (*syscall_control)(ThreadId, UInt, UWord*, UInt, SysRes*)
+)
+{
+   VG_(needs).syscall_control = True;
+   VG_(tdict).tool_syscall_control = syscall_control;
+}
+
 
 /*--------------------------------------------------------------------*/
 /* Tracked events.  Digit 'n' on DEFn is the REGPARMness. */
