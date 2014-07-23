@@ -243,7 +243,7 @@ void AN_(MD5_Update)(AN_(MD5_CTX) *ctx, const void *data, unsigned long size)
         VG_(memcpy)(ctx->buffer, data, size);
 }
 
-void AN_(MD5_Final)(unsigned char *result, AN_(MD5_CTX) *ctx)
+void AN_(MD5_Final)(MD5_Digest *result, AN_(MD5_CTX) *ctx)
 {
         unsigned long used, available;
 
@@ -274,22 +274,22 @@ void AN_(MD5_Final)(unsigned char *result, AN_(MD5_CTX) *ctx)
 
         body(ctx, ctx->buffer, 64);
 
-        result[0] = ctx->a;
-        result[1] = ctx->a >> 8;
-        result[2] = ctx->a >> 16;
-        result[3] = ctx->a >> 24;
-        result[4] = ctx->b;
-        result[5] = ctx->b >> 8;
-        result[6] = ctx->b >> 16;
-        result[7] = ctx->b >> 24;
-        result[8] = ctx->c;
-        result[9] = ctx->c >> 8;
-        result[10] = ctx->c >> 16;
-        result[11] = ctx->c >> 24;
-        result[12] = ctx->d;
-        result[13] = ctx->d >> 8;
-        result[14] = ctx->d >> 16;
-        result[15] = ctx->d >> 24;
+        result->data[0] = ctx->a;
+        result->data[1] = ctx->a >> 8;
+        result->data[2] = ctx->a >> 16;
+        result->data[3] = ctx->a >> 24;
+        result->data[4] = ctx->b;
+        result->data[5] = ctx->b >> 8;
+        result->data[6] = ctx->b >> 16;
+        result->data[7] = ctx->b >> 24;
+        result->data[8] = ctx->c;
+        result->data[9] = ctx->c >> 8;
+        result->data[10] = ctx->c >> 16;
+        result->data[11] = ctx->c >> 24;
+        result->data[12] = ctx->d;
+        result->data[13] = ctx->d >> 8;
+        result->data[14] = ctx->d >> 16;
+        result->data[15] = ctx->d >> 24;
 
         VG_(memset)(ctx, 0, sizeof(*ctx));
 }

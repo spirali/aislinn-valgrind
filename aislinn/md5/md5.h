@@ -33,6 +33,11 @@
 
 #define AN_(str) VGAPPEND(vgAislinn,str)
 
+typedef 
+   struct {
+      unsigned char data[16];
+   } MD5_Digest;
+
 /* Any 32-bit or wider unsigned integer data type will do */
 typedef unsigned int MD5_u32plus;
 
@@ -45,6 +50,6 @@ typedef struct {
 
 extern void AN_(MD5_Init)(AN_(MD5_CTX) *ctx);
 extern void AN_(MD5_Update)(AN_(MD5_CTX) *ctx, const void *data, unsigned long size);
-extern void AN_(MD5_Final)(unsigned char *result, AN_(MD5_CTX) *ctx);
+extern void AN_(MD5_Final)(MD5_Digest *result, AN_(MD5_CTX) *ctx);
 
 #endif
