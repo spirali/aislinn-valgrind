@@ -696,7 +696,9 @@ void VG_(needs_restore_thread)(
       Bool (restore_thread)(ThreadId tid)
 );
 
-
+void VG_(needs_syscall_control)(
+    Bool (*syscall_control)(ThreadId, UInt, UWord*, UInt, SysRes*)
+);
 
 
 /* Signal events (not exhaustive)
