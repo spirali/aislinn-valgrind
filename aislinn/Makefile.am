@@ -66,7 +66,7 @@ if VGCONF_OS_IS_DARWIN
 noinst_DSYMS = $(noinst_PROGRAMS)
 endif
 
-VGPRELOAD_aislinn_SOURCES_COMMON =
+VGPRELOAD_aislinn_SOURCES_COMMON = an_replace_strmem.c
 
 vgpreload_aislinn_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_SOURCES      = \
 	$(VGPRELOAD_aislinn_SOURCES_COMMON)
@@ -94,4 +94,5 @@ vgpreload_aislinn_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_LDFLAGS      = \
 	$(LIBREPLACEMALLOC_LDFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
 endif
 
+an_replace_strmem.o: CFLAGS += -fno-omit-frame-pointer
 
