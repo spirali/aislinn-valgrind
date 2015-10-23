@@ -61,6 +61,7 @@ extern Bool VG_(is_dir) ( const HChar* f );
 #define VG_CLO_DEFAULT_LOGPORT 1500
 
 extern Int VG_(connect_via_socket)( const HChar* str );
+extern Int VG_(make_listen_socket)( Int port, Int queue_size );
 
 extern UInt   VG_(htonl) ( UInt x );
 extern UInt   VG_(ntohl) ( UInt x );
@@ -77,6 +78,8 @@ extern Int VG_(getsockopt)  ( Int sd, Int level, Int optname,
                               void *optval, Int *optlen );
 extern Int VG_(setsockopt)  ( Int sd, Int level, Int optname,
                               void *optval, Int optlen );
+extern Int VG_(accept)  (Int sd, struct vki_sockaddr *name, Int *namelen);
+
 
 extern Int VG_(access) ( const HChar* path, Bool irusr, Bool iwusr,
                                             Bool ixusr );
