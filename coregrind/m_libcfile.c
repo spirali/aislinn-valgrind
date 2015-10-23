@@ -1028,6 +1028,37 @@ Int VG_(connect_via_socket)( const HChar* str )
 #  endif
 }
 
+Int VG_(make_listen_socket)(Int port, Int queue_size)
+{
+#  if defined(VGO_linux) || defined(VGO_darwin)
+   Int sd;
+   SysRes res;
+   struct vki_sockaddr_in addr;
+
+   /* create socket */
+   sd = VG_(socket)(VKI_AF_INET, VKI_SOCK_STREAM, 0 /* IPPROTO_IP ? */);
+   if (sd < 0) {
+      /* this shouldn't happen ... nevertheless */
+      return -2;
+   }
+
+   addr.sin_family = VKI_AF_INET;
+   addr.sin_addr.s_addr = 0; // INADDR_ANY
+   addr.sin_port = VG_(htons)(port);
+
+   res = VG_(do_syscall3)(__NR_bind, sd, (UWord) &addr, sizeof(addr));
+   vg_assert(!sr_isError(res));
+
+   res = VG_(do_syscall2)(__NR_listen, sd, queue_size);
+   vg_assert(!sr_isError(res));
+
+   return sd;
+
+#  else
+#    error "Unknown OS"
+#  endif
+}
+
 Int VG_(read_socket)( Int sd, void *msg, Int count )
 {
    /* This is actually send(). */
@@ -1281,6 +1312,20 @@ Int VG_(getsockname) ( Int sd, struct vki_sockaddr *name, Int *namelen)
                           VKI_SOV_DEFAULT /*version*/);
    return sr_isError(res) ? -1 : sr_Res(res);
 
+#  else
+#    error "Unknown platform"
+#  endif
+}
+
+Int VG_(accept)  (Int sd, struct vki_sockaddr *name, Int *namelen)
+{
+#  if defined(VGP_amd64_linux) || defined(VGP_arm_linux) \
+        || defined(VGP_mips64_linux) || defined(VGP_arm64_linux) \
+        || defined(VGP_tilegx_linux)
+   SysRes res;
+   res = VG_(do_syscall3)( __NR_accept,
+                           (UWord)sd, (UWord)name, (UWord)namelen );
+   return sr_isError(res) ? -1 : sr_Res(res);
 #  else
 #    error "Unknown platform"
 #  endif
